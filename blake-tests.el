@@ -130,5 +130,16 @@
                                   (error-message-string error)))
                  (should-not error)))))))))
 
+(ert-deftest blake-two-init-state-zero-sample ()
+  (let* ((kind blake-two-big)
+         (state (vconcat (alist-get kind blake-two-iv))))
+    (should (= #x6A09E667F3BCC908
+               (aref state 0)
+               (aref (alist-get kind blake-two-iv) 0)))
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, i=0, v[16][0]
+    (should (= #x6A09E667F2BDC948
+               (blake-two-init-state-zero
+                kind state 0 (alist-get kind blake-two-bits-in-word))))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here

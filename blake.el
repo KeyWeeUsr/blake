@@ -31,6 +31,7 @@
 (defconst blake-two-small 'blake-two-small)
 (defconst blake-two-kinds '(blake-two-big blake-two-small))
 
+(defconst blake-two-byte 8)
 (defconst blake-two-bits-in-word
   '((blake-two-big . 64)
     (blake-two-small . 32)))
@@ -254,6 +255,19 @@ Optional argument FINAL is a flag marking the final round."
         (aset (aref data chunk) chunk-pos (aref raw-data idx))
         (setq idx (1+ idx))))
     data))
+
+(defun blake-two-init-state-zero (kind state key first-bytes)
+  "Initialize zero-th place in the state.
+Argument KIND One of `blake-two-kinds'.
+Argument STATE 8-element state vector.
+Argument KEY is a secret key making the func output a keyed hash.
+Argument FIRST-BYTES cuts the output to the first N bytes."
+  (logxor (aref state 0)
+          #x01010000
+          (logand (lsh key (/ (alist-get kind blake-two-bits-in-word)
+                              blake-two-byte))
+                  (1- (expt 2 (alist-get kind blake-two-bits-in-word))))
+          first-bytes))
 
 (defun blake-two (kind raw-data first-bytes &optional key)
   "BLAKE2 hashing func.
