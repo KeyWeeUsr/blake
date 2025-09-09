@@ -167,6 +167,37 @@ Arguments X, Y are input words for xoring and rotating."
 
     v))
 
+(defun blake-two-round (kind state msg schedule)
+  "Single round of the compressing function F.
+Argument KIND One of `blake-two-kinds'.
+Argument STATE 8-element state vector.
+Argument MSG 16-element message vector.
+Argument SCHEDULE contains resolved mixing positions in state."
+  (setq state (blake-two-mix kind state 0 4  8 12
+                             (aref msg (aref schedule 0))
+                             (aref msg (aref schedule 1))))
+  (setq state (blake-two-mix kind state  1 5  9 13
+                             (aref msg (aref schedule 2))
+                             (aref msg (aref schedule 3))))
+  (setq state (blake-two-mix kind state  2 6 10 14
+                             (aref msg (aref schedule 4))
+                             (aref msg (aref schedule 5))))
+  (setq state (blake-two-mix kind state  3 7 11 15
+                             (aref msg (aref schedule 6))
+                             (aref msg (aref schedule 7))))
+  (setq state (blake-two-mix kind state  0 5 10 15
+                             (aref msg (aref schedule 8))
+                             (aref msg (aref schedule 9))))
+  (setq state (blake-two-mix kind state  1 6 11 12
+                             (aref msg (aref schedule 10))
+                             (aref msg (aref schedule 11))))
+  (setq state (blake-two-mix kind state  2 7  8 13
+                             (aref msg (aref schedule 12))
+                             (aref msg (aref schedule 13))))
+  (setq state (blake-two-mix kind state  3 4  9 14
+                             (aref msg (aref schedule 14))
+                             (aref msg (aref schedule 15)))))
+
 (defun blake-two-compress (kind state msg counter &optional final)
   "Compressing function F.
 Argument KIND One of `blake-two-kinds'.

@@ -284,5 +284,45 @@
                     #x2318A24E2140FC64]
                    state))))
 
+(ert-deftest blake-two-one-round-mix ()
+  (let* ((kind blake-two-big)
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
+         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]))
+    ;; initialize state
+    ;; note: this should be set by the compress func
+    (aset state 0 (blake-two-init-state-zero
+                   kind state 0 (alist-get kind blake-two-bits-in-word)))
+
+    ;; state is a 16-element array of [,@init state, ,@IV]
+    (setq state (vconcat state (alist-get kind blake-two-iv)))
+
+    ;; set the counter for the first compression round manually
+    ;; note: this should be set by the compress func
+    (aset state 12 (1+ (aref state 12)))
+
+    ;; invert the v[14] manually
+    ;; note: this should be set by the compress func
+    ;; note: this happens only when the final compression takes the place
+    ;;       for which a small-enough message falls only to the final stage
+    ;;       without intermediate compression calls
+    (aset state 14
+          (logand (lognot (aref state 14))
+                  (1- (expt 2 (alist-get kind blake-two-bits-in-word)))))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, i=0, v[16][0]
+    (should (= #x6A09E667F2BDC948 (aref state 0)))
+    (should (= 0 (aref msg (aref schedule 1))))
+    (should (= (aref msg 0) (aref msg (aref schedule 0))))
+
+    (setq state (blake-two-round kind state msg schedule))
+    (should (equal [#x86B7C1568029BB79 #xC12CBCC809FF59F3 #xC6A5214CC0EACA8E
+                    #x0C87CD524C14CC5D #x44EE6039BD86A9F7 #xA447C850AA694A7E
+                    #xDE080F1BB1C0F84B #x595CB8A9A1ACA66C #xBEC3AE837EAC4887
+                    #x6267FC79DF9D6AD1 #xFA87B01273FA6DBE #x521A715C63E08D8A
+                    #xE02D0975B8D37A83 #x1C7B754F08B7D193 #x8F885A76B6E578FE
+                    #x2318A24E2140FC64]
+                   state))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here
