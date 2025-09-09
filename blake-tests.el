@@ -580,6 +580,27 @@
                (blake-two-init-state-zero
                 kind state 0 (alist-get kind blake-two-bits-in-word))))))
 
+(ert-deftest blake-two-small-compress ()
+  (let* ((kind blake-two-small)
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (msg (aref (blake-two-chunk-data "abc") 0))
+         (counter 0)
+         (final t))
+    ;; initialize state
+    ;; note: this should be set by the blake2 func
+    (aset state 0 (blake-two-init-state-zero
+                   kind state 0
+                   (alist-get blake-two-small blake-two-bits-in-word)))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=0, v[16][0]
+    (should (= #x6B08E647 (aref state 0)))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, h[8]
+    (setq state (blake-two-compress kind state msg (length "abc") t))
+    (should (equal [#x8C5E8C50 #xE2147C32 #xA32BA7E1 #x2F45EB4E
+                    #x208B4537 #x293AD69E #x4C9B994D #x82596786]
+                   state))))
+
 (ert-deftest blake-two-small-digest-sample ()
   ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, BLAKE2s-256
   (should (equal [#x50 #x8C #x5E #x8C #x32 #x7C #x14 #xE2
