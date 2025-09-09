@@ -30,5 +30,12 @@
 (defconst blake-two-big 'blake-two-big)
 (defconst blake-two-small 'blake-two-small)
 
+(defconst blake-two-bits-in-word '((blake-two-big . 64) (blake-two-small . 32)))
+(defconst blake-two-rounds '((blake-two-big . 12) (blake-two-small . 10)))
+(defconst blake-two-block-size '((blake-two-big . 128) (blake-two-small . 64)))
+(defconst blake-two-hash-size-limits
+  '((blake-two-big . ((upper . 64) (lower . 1)))
+    (blake-two-small . ((upper . 32) (lower . 1)))))
+
 (provide 'blake)
 ;;; blake.el ends here
