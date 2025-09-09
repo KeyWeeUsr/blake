@@ -313,19 +313,17 @@ Argument KIND One of `blake-two-kinds'.
 Argument RAW-DATA is string to be hashed.
 Argument FIRST-BYTES cuts the output to the first N bytes.
 Optional argument KEY is a secret key making the func output a keyed hash."
+  (unless key (setq key 0))
   (unless (member kind blake-two-kinds)
     (error "Invalid kind %S" kind))
 
   (let* ((data (blake-two-chunk-data raw-data))
-         (state (alist-get kind blake-two-iv))
-         (data-len (length data)))
+         ;; copy because of re-use in defconst
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (data-len (length data))
+         (output (make-vector (alist-get kind blake-two-bits-in-word) 0)))
     ;; parameter block p[0]
-    (aset state 0
-          (logxor (aref state 0)
-                  #x01010000
-                  (logand (lsh key 8)
-                          (1- (expt 2 (alist-get kind blake-two-bits-in-word))))
-                  first-bytes))
+    (aset state 0 (blake-two-init-state-zero kind state key first-bytes))
 
     ;; Process padded key and data blocks
     (when (> data-len 1)
@@ -336,7 +334,7 @@ Optional argument KEY is a secret key making the func output a keyed hash."
                      (aref data idx) (* (1+ idx) blake-two-msg-size)))))
 
     ;; Final block
-    (if (= 0 (length key))
+    (if (= 0 key)
         (setq state (blake-two-compress kind state
                                         (aref data (1- data-len))
                                         (length raw-data)
@@ -346,8 +344,14 @@ Optional argument KEY is a secret key making the func output a keyed hash."
                                       (+ (length raw-data)
                                          blake-two-msg-size)
                                       t)))
-    ;; todo: RETURN first "nn" bytes from little-endian word array h[].
-    state))
+
+    (dotimes (idx first-bytes)
+      (aset output idx
+            (logand (lsh (aref state (/ idx blake-two-byte))
+                         (* -1 (* blake-two-byte (mod idx blake-two-byte))))
+                    #xFF)))
+
+    output))
 
 (provide 'blake)
 ;;; blake.el ends here

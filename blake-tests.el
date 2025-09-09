@@ -555,5 +555,19 @@
                     #x5A92F1DBA88AD318 #x239900D4ED8623B9]
                    state))))
 
+(ert-deftest blake-two-digest-sample ()
+  ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, BLAKE2b-512
+  (should (equal [#xBA #x80 #xA5 #x3F #x98 #x1C #x4D #x0D
+                  #x6A #x27 #x97 #xB6 #x9F #x12 #xF6 #xE9
+                  #x4C #x21 #x2F #x14 #x68 #x5A #xC4 #xB7
+                  #x4B #x12 #xBB #x6F #xDB #xFF #xA2 #xD1
+                  #x7D #x87 #xC5 #x39 #x2A #xAB #x79 #x2D
+                  #xC2 #x52 #xD5 #xDE #x45 #x33 #xCC #x95
+                  #x18 #xD3 #x8A #xA8 #xDB #xF1 #x92 #x5A
+                  #xB9 #x23 #x86 #xED #xD4 #x00 #x99 #x23]
+                 (blake-two
+                  blake-two-big "abc"
+                  (alist-get blake-two-big blake-two-bits-in-word)))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here
