@@ -73,6 +73,51 @@
 For BLAKE2b, the two extra permutations forrounds 10 and 11 are
 SIGMA[10..11] = SIGMA[0..1].")
 
+(defconst blake-two-local-size 16
+  "Size of 32-bit or 64-bit word local vector for calculating.")
+
+(defun blake-rotate (v n &optional size)
+  "Left (N>0) or right (N<0) rotate the *unsigned* SIZE-bit value V N-times.
+From Elchacha (`elchacha-rotate')."
+  (unless size (setq size 32))
+  (let ((n (mod (+ n size) size)))
+    (if (= n 0) v
+      (logand (logior (ash v n) (ash v (* -1 (- size n))))
+              (1- (expt 2 size))))))
+
+(defun blake-two-mix (kind v a b c d x y)
+  "Mixing function G from RFC7693.
+Ref: https://www.rfc-editor.org/rfc/rfc7693#section-3.1
+Argument KIND `blake-two-big' or `blake-two-small'.
+Argument V Working 16-element vector.
+Arguments A, B, C, D are used as V index when xoring.
+Arguments X, Y are input words for xoring and rotating."
+  (unless (member kind '(blake-two-big blake-two-small))
+    (error "Invalid kind %S" kind))
+
+  (unless (= blake-two-local-size (length v))
+    (error "Invalid V length"))
+
+  (let ((rotconst (alist-get kind blake-two-rotconst)))
+    (aset v a (+ (aref v a) (aref v b) x))
+    (aset v d (blake-rotate (logxor (aref v d) (aref v a))
+                            (nth 0 rotconst)
+                            64))
+    (aset v c (+ (aref v c) (aref v d)))
+    (aset v b (blake-rotate (logxor (aref v b) (aref v c))
+                            (nth 1 rotconst)
+                            64))
+
+    (aset v a (+ (aref v a) (aref v b) y))
+    (aset v d (blake-rotate (logxor (aref v d) (aref v a))
+                            (nth 2 rotconst)
+                            64))
+    (aset v c (+ (aref v c) (aref v d)))
+    (aset v b (blake-rotate (logxor (aref v b) (aref v c))
+                            (nth 3 rotconst)
+                            64))
+
+    v))
 
 (provide 'blake)
 ;;; blake.el ends here
