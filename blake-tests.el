@@ -217,11 +217,7 @@
                              #xC8C7C6C5C4C3C2C1 #xD0CFCECDCCCBCAC9
                              #xD8D7D6D5D4D3D2D1 #xE0DFDEDDDCDBDAD9
                              #xE8E7E6E5E4E3E2E1 #xF0EFEEEDECEBEAE9
-                             ;; note: >2^64-1 is not a problem here, just
-                             ;;       garbage data correctly chunked + reading
-                             ;;       0x100 byte is either corrupt "byte"
-                             ;;       (garbage in) or an overflow (data loss)
-                             #xF8F7F6F5F4F3F2F1 #x0100FFFEFDFCFBFAF9]
+                             #xF8F7F6F5F4F3F2F1 #x00FFFEFDFCFBFAF9]
                             [#x0000000000000101
                              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]])
                   (:name "small | short [0]"
@@ -357,11 +353,7 @@
                             [#xC4C3C2C1 #xC8C7C6C5 #xCCCBCAC9 #xD0CFCECD
                              #xD4D3D2D1 #xD8D7D6D5 #xDCDBDAD9 #xE0DFDEDD
                              #xE4E3E2E1 #xE8E7E6E5 #xECEBEAE9 #xF0EFEEED
-                             ;; note: >2^32-1 is not a problem here, just
-                             ;;       garbage data correctly chunked + reading
-                             ;;       0x100 byte is either corrupt "byte"
-                             ;;       (garbage in) or an overflow (data loss)
-                             #xF4F3F2F1 #xF8F7F6F5 #xFCFBFAF9 #x100FFFEFD]
+                             #xF4F3F2F1 #xF8F7F6F5 #xFCFBFAF9 #x00FFFEFD]
                             [#x00000101 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]))))
     (dolist (item matrix)
       (let (tmp)

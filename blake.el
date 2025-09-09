@@ -174,8 +174,9 @@ From Elkee."
         (result 0))
     (dotimes (idx (/ bitness blake-two-byte))
       (setq result
-            (+ result (ash (aref data (+ idx offset))
-                           (* idx blake-two-byte)))))
+            (logand (+ result (ash (aref data (+ idx offset))
+                                   (* idx blake-two-byte)))
+                    (1- (expt 2 bitness)))))
     result))
 
 (defun blake-two-round (kind state msg schedule)
