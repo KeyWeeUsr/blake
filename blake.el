@@ -208,8 +208,8 @@ Optional argument FINAL is a flag marking the final round."
 
     (when final
       (aset local 14
-            (logxor (aref local 14)
-                    ;; invert all bits
+            ;; invert all bits
+            (logand (lognot (aref local 14))
                     (1- (expt 2 (alist-get kind blake-two-bits-in-word))))))
 
     (dotimes (idx (alist-get kind blake-two-rounds))
