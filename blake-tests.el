@@ -537,12 +537,13 @@
 (ert-deftest blake-two-compress ()
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv)))
-         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+         (msg (aref (blake-two-chunk-data "abc") 0))
          (counter 0)
          (final t))
     ;; initialize state
     ;; note: this should be set by the blake2 func
-    (aset state 0 (blake-two-init-state-zero kind state 0 64))
+    (aset state 0 (blake-two-init-state-zero
+                   kind state 0 (alist-get kind blake-two-bits-in-word)))
 
     ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, i=0, v[16][0]
     (should (= #x6A09E667F2BDC948 (aref state 0)))
