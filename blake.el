@@ -45,6 +45,13 @@
 (defconst blake-two-rotconst
   '((blake-two-big . (32 24 16 63))
     (blake-two-small . (16 12 8 7))))
+(defconst blake-two-iv
+  '((blake-two-big . [#x6A09E667F3BCC908 #xBB67AE8584CAA73B
+                      #x3C6EF372FE94F82B #xA54FF53A5F1D36F1
+                      #x510E527FADE682D1 #x9B05688C2B3E6C1F
+                      #x1F83D9ABFB41BD6B #x5BE0CD19137E2179])
+    (blake-two-small . [#x6A09E667 #xBB67AE85 #x3C6EF372 #xA54FF53A
+                        #x510E527F #x9B05688C #x1F83D9AB #x5BE0CD19])))
 
 (provide 'blake)
 ;;; blake.el ends here
