@@ -569,5 +569,16 @@
                   blake-two-big "abc"
                   (alist-get blake-two-big blake-two-bits-in-word)))))
 
+(ert-deftest blake-two-small-init-state-zero-sample ()
+  (let* ((kind blake-two-small)
+         (state (vconcat (alist-get kind blake-two-iv))))
+    (should (= #x6A09E667
+               (aref state 0)
+               (aref (alist-get kind blake-two-iv) 0)))
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=0, v[16][0]
+    (should (= #x6B08E647
+               (blake-two-init-state-zero
+                kind state 0 (alist-get kind blake-two-bits-in-word))))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here
