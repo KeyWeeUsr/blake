@@ -246,29 +246,29 @@ Optional argument FINAL is a flag marking the final round."
     (dotimes (idx (alist-get kind blake-two-rounds))
       (let ((s (aref schedule (mod idx 10))))
         (setq local (blake-two-mix kind local  0 4  8 12
-                                   (aref msg (aref schedule 0))
-                                   (aref msg (aref schedule 1))))
+                                   (aref msg (aref s 0))
+                                   (aref msg (aref s 1))))
         (setq local (blake-two-mix kind local  1 5  9 13
-                                   (aref msg (aref schedule 2))
-                                   (aref msg (aref schedule 3))))
+                                   (aref msg (aref s 2))
+                                   (aref msg (aref s 3))))
         (setq local (blake-two-mix kind local  2 6 10 14
-                                   (aref msg (aref schedule 4))
-                                   (aref msg (aref schedule 5))))
+                                   (aref msg (aref s 4))
+                                   (aref msg (aref s 5))))
         (setq local (blake-two-mix kind local  3 7 11 15
-                                   (aref msg (aref schedule 6))
-                                   (aref msg (aref schedule 7))))
+                                   (aref msg (aref s 6))
+                                   (aref msg (aref s 7))))
         (setq local (blake-two-mix kind local  0 5 10 15
-                                   (aref msg (aref schedule 8))
-                                   (aref msg (aref schedule 9))))
+                                   (aref msg (aref s 8))
+                                   (aref msg (aref s 9))))
         (setq local (blake-two-mix kind local  1 6 11 12
-                                   (aref msg (aref schedule 10))
-                                   (aref msg (aref schedule 11))))
+                                   (aref msg (aref s 10))
+                                   (aref msg (aref s 11))))
         (setq local (blake-two-mix kind local  2 7  8 13
-                                   (aref msg (aref schedule 12))
-                                   (aref msg (aref schedule 13))))
+                                   (aref msg (aref s 12))
+                                   (aref msg (aref s 13))))
         (setq local (blake-two-mix kind local  3 4  9 14
-                                   (aref msg (aref schedule 14))
-                                   (aref msg (aref schedule 15))))))
+                                   (aref msg (aref s 14))
+                                   (aref msg (aref s 15))))))
 
     (dotimes (idx blake-two-state-size)
       (aset state idx (logxor (aref state idx)
