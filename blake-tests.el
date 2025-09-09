@@ -231,7 +231,8 @@
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv)))
          (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
-         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]))
+         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+         (ctr-size (alist-get kind blake-two-counter-size)))
     (aset state 0 (blake-two-init-state-zero
                    kind state 0 (alist-get kind blake-two-bits-in-word)))
 
@@ -239,7 +240,8 @@
 
     ;; set the counter for the first compression round manually
     ;; note: this should be set by the compress func
-    (aset state 12 (1+ (aref state 12)))
+    (aset state 12 (logxor (aref state 12)
+                           (mod (length "abc") (expt 2 ctr-size))))
 
     ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, i=0, v[16][0]
     (should (= #x6A09E667F2BDC948 (aref state 0)))
@@ -255,7 +257,8 @@
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv)))
          (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
-         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]))
+         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+         (ctr-size (alist-get kind blake-two-counter-size)))
     ;; initialize state
     ;; note: this should be set by the blake2 func
     (aset state 0 (blake-two-init-state-zero
@@ -266,7 +269,8 @@
 
     ;; set the counter for the first compression round manually
     ;; note: this should be set by the compress func
-    (aset state 12 (1+ (aref state 12)))
+    (aset state 12 (logxor (aref state 12)
+                           (mod (length "abc") (expt 2 ctr-size))))
 
     ;; invert the v[14] manually
     ;; note: this should be set by the compress func
@@ -374,7 +378,8 @@
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv)))
          (schedules (vconcat (alist-get kind blake-two-schedule)))
-         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]))
+         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+         (ctr-size (alist-get kind blake-two-counter-size)))
     ;; initialize state
     ;; note: this should be set by the blake2 func
     (aset state 0 (blake-two-init-state-zero
@@ -385,7 +390,8 @@
 
     ;; set the counter for the first compression round manually
     ;; note: this should be set by the compress func
-    (aset state 12 (1+ (aref state 12)))
+    (aset state 12 (logxor (aref state 12)
+                           (mod (length "abc") (expt 2 ctr-size))))
 
     ;; invert the v[14] manually
     ;; note: this should be set by the compress func
