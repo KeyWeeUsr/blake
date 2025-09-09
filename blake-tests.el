@@ -580,5 +580,15 @@
                (blake-two-init-state-zero
                 kind state 0 (alist-get kind blake-two-bits-in-word))))))
 
+(ert-deftest blake-two-small-digest-sample ()
+  ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, BLAKE2s-256
+  (should (equal [#x50 #x8C #x5E #x8C #x32 #x7C #x14 #xE2
+                  #xE1 #xA7 #x2B #xA3 #x4E #xEB #x45 #x2F
+                  #x37 #x45 #x8B #x20 #x9E #xD6 #x3A #x29
+                  #x4D #x99 #x9B #x4C #x86 #x67 #x59 #x82]
+                 (blake-two
+                  blake-two-small "abc"
+                  (alist-get blake-two-small blake-two-bits-in-word)))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here

@@ -345,11 +345,11 @@ Optional argument KEY is a secret key making the func output a keyed hash."
                                          blake-two-msg-size)
                                       t)))
 
-    (dotimes (idx first-bytes)
-      (aset output idx
-            (logand (lsh (aref state (/ idx blake-two-byte))
-                         (* -1 (* blake-two-byte (mod idx blake-two-byte))))
-                    #xFF)))
+    (let ((word (/ (alist-get kind blake-two-bits-in-word) blake-two-byte)))
+      (dotimes (idx first-bytes)
+        (aset output idx (logand (lsh (aref state (/ idx word))
+                                      (* -1 (* blake-two-byte (mod idx word))))
+                                 #xFF))))
 
     output))
 
