@@ -167,6 +167,17 @@ Arguments X, Y are input words for xoring and rotating."
 
     v))
 
+(defun blake-read-uint (data bitness &optional offset)
+  "Read an unsigned integer of BITNESS from DATA at OFFSET.
+From Elkee."
+  (let ((offset (or offset 0))
+        (result 0))
+    (dotimes (idx (/ bitness blake-two-byte))
+      (setq result
+            (+ result (lsh (aref data (+ idx offset))
+                           (* idx blake-two-byte)))))
+    result))
+
 (defun blake-two-round (kind state msg schedule)
   "Single round of the compressing function F.
 Argument KIND One of `blake-two-kinds'.
@@ -277,19 +288,33 @@ Optional argument FINAL is a flag marking the final round."
 (defun blake-two-chunk-data (raw-data)
   "Split RAW-DATA flat array of bytes into BLAKE workable blocks."
   (let* ((data-len (length raw-data))
-         (data (make-vector (ceiling (/ (float data-len) blake-two-msg-size))
+         (element-size (/ (alist-get blake-two-big blake-two-bits-in-word)
+                          blake-two-byte))
+         (data (make-vector (ceiling (/ (float data-len) (* blake-two-msg-size
+                                                            element-size)))
                             nil))
-         (idx 0))
+         (raw-pos 0)
+         (chunk-pos 0)
+         (chunk-idx 0)
+         (new-chunk t))
     (unless (> data-len 0) (error "Empty data"))
 
-    (while (< idx data-len)
-      (let ((chunk (/ idx blake-two-msg-size))
-            (chunk-pos (mod idx blake-two-msg-size)))
-        (when (= 0 chunk-pos)
-          (aset data chunk (make-vector blake-two-msg-size 0)))
+    (while (< raw-pos data-len)
+      (let* ((element (make-vector element-size 0)))
+        (when new-chunk
+          (aset data chunk-pos (make-vector blake-two-msg-size 0))
+          (setq new-chunk nil))
 
-        (aset (aref data chunk) chunk-pos (aref raw-data idx))
-        (setq idx (1+ idx))))
+        (dotimes (eidx element-size)
+          (when (< raw-pos data-len)
+            (aset element eidx (aref raw-data raw-pos))
+            (setq raw-pos (1+ raw-pos))))
+
+        (aset (aref data chunk-pos) chunk-idx (blake-read-uint element 64))
+        (setq chunk-idx (mod (1+ chunk-idx) blake-two-msg-size))
+        (when (= 0 (mod raw-pos (* blake-two-msg-size element-size)))
+          (setq chunk-pos (1+ chunk-pos))
+          (setq new-chunk t))))
     data))
 
 (defun blake-two-init-state-zero (kind state key first-bytes)

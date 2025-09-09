@@ -90,35 +90,121 @@
                    :error nil
                    :result [[1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]])
                   (:name "n-1"
-                   :data ,(vconcat (number-sequence 1 15))
+                   :data ,(vconcat (number-sequence 1 (1- blake-two-msg-size)))
                    :error nil
-                   :result [[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 0]])
+                   :result [[#x0807060504030201 #x000F0E0D0C0B0A09
+                             0 0 0 0 0 0 0 0 0 0 0 0 0 0]])
                   (:name "n"
-                   :data ,(vconcat (number-sequence 1 16))
+                   :data ,(vconcat (number-sequence 1 blake-two-msg-size))
                    :error nil
-                   :result [[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]])
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             0 0 0 0 0 0 0 0 0 0 0 0 0 0]])
                   (:name "n+1"
-                   :data ,(vconcat (number-sequence 1 17))
+                   :data ,(vconcat (number-sequence 1 (1+ blake-two-msg-size)))
                    :error nil
-                   :result [[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
-                            [17  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]])
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x0000000000000011 0 0 0 0 0 0 0 0 0 0 0 0 0]])
                   (:name "2n-1"
-                   :data ,(vconcat (number-sequence 1 31))
+                   :data ,(vconcat (number-sequence
+                                    1 (1- (* 2 blake-two-msg-size))))
                    :error nil
-                   :result [[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
-                            [17 18 19 20 21 22 23 24 25 26 27 28 29 30 31  0]])
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x1817161514131211 #x001F1E1D1C1B1A19
+                             0 0 0 0 0 0 0 0 0 0 0 0]])
                   (:name "2n"
-                   :data ,(vconcat (number-sequence 1 32))
+                   :data ,(vconcat (number-sequence
+                                    1 (* 2 blake-two-msg-size)))
                    :error nil
-                   :result [[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
-                            [17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32]])
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x1817161514131211 #x201F1E1D1C1B1A19
+                             0 0 0 0 0 0 0 0 0 0 0 0]])
                   (:name "2n+1"
-                   :data ,(vconcat (number-sequence 1 33))
+                   :data ,(vconcat (number-sequence
+                                    1 (1+ (* 2 blake-two-msg-size))))
                    :error nil
-                   :result [[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
-                            [17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32]
-                            [33  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]])
-                  )))
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x1817161514131211 #x201F1E1D1C1B1A19
+                             #x0000000000000021 0 0 0 0 0 0 0 0 0 0 0]])
+                  (:name "8n-1"
+                   :data ,(vconcat (number-sequence
+                                    1 (1- (* 8 blake-two-msg-size))))
+                   :error nil
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x1817161514131211 #x201F1E1D1C1B1A19
+                             #x2827262524232221 #x302F2E2D2C2B2A29
+                             #x3837363534333231 #x403F3E3D3C3B3A39
+                             #x4847464544434241 #x504F4E4D4C4B4A49
+                             #x5857565554535251 #x605F5E5D5C5B5A59
+                             #x6867666564636261 #x706F6E6D6C6B6A69
+                             #x7877767574737271 #x007F7E7D7C7B7A79]])
+                  (:name "8n"
+                   :data ,(vconcat (number-sequence
+                                    1 (* 8 blake-two-msg-size)))
+                   :error nil
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x1817161514131211 #x201F1E1D1C1B1A19
+                             #x2827262524232221 #x302F2E2D2C2B2A29
+                             #x3837363534333231 #x403F3E3D3C3B3A39
+                             #x4847464544434241 #x504F4E4D4C4B4A49
+                             #x5857565554535251 #x605F5E5D5C5B5A59
+                             #x6867666564636261 #x706F6E6D6C6B6A69
+                             #x7877767574737271 #x807F7E7D7C7B7A79]])
+                  (:name "8n+1"
+                   :data ,(vconcat (number-sequence
+                                    1 (1+ (* 8 blake-two-msg-size))))
+                   :error nil
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x1817161514131211 #x201F1E1D1C1B1A19
+                             #x2827262524232221 #x302F2E2D2C2B2A29
+                             #x3837363534333231 #x403F3E3D3C3B3A39
+                             #x4847464544434241 #x504F4E4D4C4B4A49
+                             #x5857565554535251 #x605F5E5D5C5B5A59
+                             #x6867666564636261 #x706F6E6D6C6B6A69
+                             #x7877767574737271 #x807F7E7D7C7B7A79]
+                            [#x0000000000000081
+                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]])
+                  (:name "16n-1"
+                   :data ,(vconcat (number-sequence
+                                    1 (1- (* 16 blake-two-msg-size))))
+                   :error nil
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x1817161514131211 #x201F1E1D1C1B1A19
+                             #x2827262524232221 #x302F2E2D2C2B2A29
+                             #x3837363534333231 #x403F3E3D3C3B3A39
+                             #x4847464544434241 #x504F4E4D4C4B4A49
+                             #x5857565554535251 #x605F5E5D5C5B5A59
+                             #x6867666564636261 #x706F6E6D6C6B6A69
+                             #x7877767574737271 #x807F7E7D7C7B7A79]
+                            [#x8887868584838281 #x908F8E8D8C8B8A89
+                             #x9897969594939291 #xA09F9E9D9C9B9A99
+                             #xA8A7A6A5A4A3A2A1 #xB0AFAEADACABAAA9
+                             #xB8B7B6B5B4B3B2B1 #xC0BFBEBDBCBBBAB9
+                             #xC8C7C6C5C4C3C2C1 #xD0CFCECDCCCBCAC9
+                             #xD8D7D6D5D4D3D2D1 #xE0DFDEDDDCDBDAD9
+                             #xE8E7E6E5E4E3E2E1 #xF0EFEEEDECEBEAE9
+                             #xF8F7F6F5F4F3F2F1 #x00FFFEFDFCFBFAF9]])
+                  (:name "16n+1"
+                   :data ,(vconcat (number-sequence
+                                    1 (1+ (* 16 blake-two-msg-size))))
+                   :error nil
+                   :result [[#x0807060504030201 #x100F0E0D0C0B0A09
+                             #x1817161514131211 #x201F1E1D1C1B1A19
+                             #x2827262524232221 #x302F2E2D2C2B2A29
+                             #x3837363534333231 #x403F3E3D3C3B3A39
+                             #x4847464544434241 #x504F4E4D4C4B4A49
+                             #x5857565554535251 #x605F5E5D5C5B5A59
+                             #x6867666564636261 #x706F6E6D6C6B6A69
+                             #x7877767574737271 #x807F7E7D7C7B7A79]
+                            [#x8887868584838281 #x908F8E8D8C8B8A89
+                             #x9897969594939291 #xA09F9E9D9C9B9A99
+                             #xA8A7A6A5A4A3A2A1 #xB0AFAEADACABAAA9
+                             #xB8B7B6B5B4B3B2B1 #xC0BFBEBDBCBBBAB9
+                             #xC8C7C6C5C4C3C2C1 #xD0CFCECDCCCBCAC9
+                             #xD8D7D6D5D4D3D2D1 #xE0DFDEDDDCDBDAD9
+                             #xE8E7E6E5E4E3E2E1 #xF0EFEEEDECEBEAE9
+                             #xF8F7F6F5F4F3F2F1 #x0100fffefdfcfbfaf9]
+                            [#x0000000000000101
+                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]))))
     (dolist (item matrix)
       (let (tmp)
         (condition-case error
@@ -443,6 +529,10 @@
                     #x885BEF040EF6AA0B #xA4939A417BFB78A3 #x646CBB7AF6DCE980
                     #xE813A23C60AF3B82]
                    state))))
+
+(ert-deftest blake-two-chunk-raw-data ()
+  (should (equal [[#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]
+                 (blake-two-chunk-data "abc"))))
 
 (ert-deftest blake-two-compress ()
   (let* ((kind blake-two-big)
