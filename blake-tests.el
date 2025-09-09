@@ -877,6 +877,126 @@
                     #x7A8DD50F #xBE378ED7 #x353D1EE6 #x3BB44C6B]
                    state))))
 
+(ert-deftest blake-two-small-twelve-round-mix ()
+  (let* ((kind blake-two-small)
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (schedules (vconcat (alist-get kind blake-two-schedule)))
+         (msg [#x00636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+         (ctr-size (alist-get kind blake-two-counter-size)))
+    ;; initialize state
+    ;; note: this should be set by the blake2 func
+    (aset state 0 (blake-two-init-state-zero
+                   kind state 0 (alist-get kind blake-two-bits-in-word)))
+
+    ;; state is a 16-element array of [,@init state, ,@IV]
+    (setq state (vconcat state (alist-get kind blake-two-iv)))
+
+    ;; set the counter for the first compression round manually
+    ;; note: this should be set by the compress func
+    (aset state 12 (logxor (aref state 12)
+                           (mod (length "abc") (expt 2 ctr-size))))
+
+    ;; invert the v[14] manually
+    ;; note: this should be set by the compress func
+    ;; note: this happens only when the final compression takes the place
+    ;;       for which a small-enough message falls only to the final stage
+    ;;       without intermediate compression calls
+    (aset state 14
+          (logand (lognot (aref state 14))
+                  (1- (expt 2 (alist-get kind blake-two-bits-in-word)))))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=0, v[16][0]
+    (should (= #x6B08E647 (aref state 0)))
+    (should (= 0 (aref msg (aref (aref schedules 0) 1))))
+    (should (= (aref msg 0) (aref msg (aref (aref schedules 0) 0))))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=0, v[16]
+    (should (equal [#x6B08E647 #xBB67AE85 #x3C6EF372 #xA54FF53A
+                    #x510E527F #x9B05688C #x1F83D9AB #x5BE0CD19
+                    #x6A09E667 #xBB67AE85 #x3C6EF372 #xA54FF53A
+                    #x510E527C #x9B05688C #xE07C2654 #x5BE0CD19]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=1, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 0)))
+    (should (equal [#x16A3242E #xD7B5E238 #xCE8CE24B #x927AEDE1
+                    #xA7B430D9 #x93A4A14E #xA44E7C31 #x41D4759B
+                    #x95BF33D3 #x9A99C181 #x608A3A6B #xB666383E
+                    #x7A8DD50F #xBE378ED7 #x353D1EE6 #x3BB44C6B]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=2, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 1)))
+    (should (equal [#x3AE30FE3 #x0982A96B #xE88185B4 #x3E339B16
+                    #xF24338CD #x0E66D326 #xE005ED0C #xD591A277
+                    #x180B1F3A #xFCF43914 #x30DB62D6 #x4847831C
+                    #x7F00C58E #xFB847886 #xC544E836 #x524AB0E2]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=3, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 2)))
+    (should (equal [#x7A3BE783 #x997546C1 #xD45246DF #xEDB5F821
+                    #x7F98A742 #x10E864E2 #xD4AB70D0 #xC63CB1AB
+                    #x6038DA9E #x414594B0 #xF2C218B5 #x8DA0DCB7
+                    #xD7CD7AF5 #xAB4909DF #x85031A52 #xC4EDFC98]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=4, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 3)))
+    (should (equal [#x2A8B8CB7 #x1ACA82B2 #x14045D7F #xCC7258ED
+                    #x383CF67C #xE090E7F9 #x3025D276 #x57D04DE4
+                    #x994BACF0 #xF0982759 #xF17EE300 #xD48FC2D5
+                    #xDC854C10 #x523898A9 #xC03A0F89 #x47D6CD88]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=5, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 4)))
+    (should (equal [#xC4AA2DDB #x111343A3 #xD54A700A #x574A00A9
+                    #x857D5A48 #xB1E11989 #x6F5C52DF #xDD2C53A3
+                    #x678E5F8E #x9718D4E9 #x622CB684 #x92976076
+                    #x0E41A517 #x359DC2BE #x87A87DDD #x643F9CEC]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=6, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 5)))
+    (should (equal [#x3453921C #xD7595EE1 #x592E776D #x3ED6A974
+                    #x4D997CB3 #xDE9212C3 #x35ADF5C9 #x9916FD65
+                    #x96562E89 #x4EAD0792 #xEBFC2712 #x2385F5B2
+                    #xF34600FB #xD7BC20FB #xEB452A7B #xECE1AA40]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=7, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 6)))
+    (should (equal [#xBE851B2D #xA85F6358 #x81E6FC3B #x0BB28000
+                    #xFA55A33A #x87BE1FAD #x4119370F #x1E2261AA
+                    #xA1318FD3 #xF4329816 #x071783C2 #x6E536A8D
+                    #x9A81A601 #xE7EC80F1 #xACC09948 #xF849A584]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=8, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 7)))
+    (should (equal [#x07E5B85A #x069CC164 #xF9DE3141 #xA56F4680
+                    #x9E440AD2 #x9AB659EA #x3C84B971 #x21DBD9CF
+                    #x46699F8C #x765257EC #xAF1D998C #x75E4C3B6
+                    #x523878DC #x30715015 #x397FEE81 #x4F1FA799]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=9, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 8)))
+    (should (equal [#x435148C4 #xA5AA2D11 #x4B354173 #xD543BC9E
+                    #xBDA2591C #xBF1D2569 #x4FCB3120 #x707ADA48
+                    #x565B3FDE #x32C9C916 #xEAF4A1AB #xB1018F28
+                    #x8078D978 #x68ADE4B5 #x9778FDA3 #x2863B92E]
+                   state))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=10, v[16]
+    (setq state (blake-two-round kind state msg (aref schedules 9)))
+    (should (equal [#xD9C994AA #xCFEC3AA6 #x700D0AB2 #x2C38670E
+                    #xAF6A1F66 #x1D023EF3 #x1D9EC27D #x945357A5
+                    #x3E9FFEBD #x969FE811 #xEF485E21 #xA632797A
+                    #xDEEF082E #xAF3D80E1 #x4E86829B #x4DEAFD3A]
+                   state))))
+
 (ert-deftest blake-two-small-chunk-raw-data ()
   (should (equal [[#x00636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]
                  (blake-two-chunk-data "abc" blake-two-small))))
