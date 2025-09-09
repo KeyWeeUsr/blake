@@ -174,7 +174,7 @@ From Elkee."
         (result 0))
     (dotimes (idx (/ bitness blake-two-byte))
       (setq result
-            (+ result (lsh (aref data (+ idx offset))
+            (+ result (ash (aref data (+ idx offset))
                            (* idx blake-two-byte)))))
     result))
 
@@ -230,7 +230,6 @@ Optional argument FINAL is a flag marking the final round."
 
   (let ((word-size (alist-get kind blake-two-bits-in-word))
         (word-max (1- (expt 2 (alist-get kind blake-two-bits-in-word))))
-        (ctr-size (alist-get kind blake-two-counter-size))
         (local (make-vector blake-two-local-size 0))
         ;; copies because of re-use in defconst
         (sigma (vconcat (alist-get kind blake-two-schedule)))
@@ -307,26 +306,27 @@ Argument KEY is a secret key making the func output a keyed hash.
 Argument FIRST-BYTES cuts the output to the first N bytes."
   (logxor (aref state 0)
           #x01010000
-          (logand (lsh key (/ (alist-get kind blake-two-bits-in-word)
+          (logand (ash key (/ (alist-get kind blake-two-bits-in-word)
                               blake-two-byte))
                   (1- (expt 2 (alist-get kind blake-two-bits-in-word))))
           first-bytes))
 
-(defun blake-two (kind raw-data first-bytes &optional key)
+(defun blake-two (kind raw-data &optional first-bytes key)
   "BLAKE2 hashing func.
 Argument KIND One of `blake-two-kinds'.
 Argument RAW-DATA is string to be hashed.
-Argument FIRST-BYTES cuts the output to the first N bytes.
+Optional argument FIRST-BYTES cuts the output to the first N bytes.
 Optional argument KEY is a secret key making the func output a keyed hash."
-  (unless key (setq key 0))
   (unless (member kind blake-two-kinds)
     (error "Invalid kind %S" kind))
+  (unless key (setq key 0))
+  (unless first-bytes
+    (setq first-bytes (alist-get kind blake-two-bits-in-word)))
 
   (let* ((data (blake-two-chunk-data raw-data kind))
          ;; copy because of re-use in defconst
          (state (vconcat (alist-get kind blake-two-iv)))
          (data-len (length data))
-         (ctr-size (alist-get kind blake-two-counter-size))
          (block-size (alist-get kind blake-two-block-size))
          (output (make-vector (alist-get kind blake-two-bits-in-word) 0)))
     ;; parameter block p[0]
@@ -352,9 +352,11 @@ Optional argument KEY is a secret key making the func output a keyed hash."
 
     (let ((word (/ (alist-get kind blake-two-bits-in-word) blake-two-byte)))
       (dotimes (idx first-bytes)
-        (aset output idx (logand (lsh (aref state (/ idx word))
-                                      (* -1 (* blake-two-byte (mod idx word))))
-                                 #xFF))))
+        (aset output idx
+              (logand (with-no-warnings
+                        (lsh (aref state (/ idx word))
+                             (* -1 (* blake-two-byte (mod idx word)))))
+                      #xFF))))
 
     output))
 
