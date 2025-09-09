@@ -255,5 +255,47 @@ Optional argument FINAL is a flag marking the final round."
         (setq idx (1+ idx))))
     data))
 
+(defun blake-two (kind raw-data first-bytes &optional key)
+  "BLAKE2 hashing func.
+Argument KIND One of `blake-two-kinds'.
+Argument RAW-DATA is string to be hashed.
+Argument FIRST-BYTES cuts the output to the first N bytes.
+Optional argument KEY is a secret key making the func output a keyed hash."
+  (unless (member kind blake-two-kinds)
+    (error "Invalid kind %S" kind))
+
+  (let* ((data (blake-two-chunk-data raw-data))
+         (state (alist-get kind blake-two-iv))
+         (data-len (length data)))
+    ;; parameter block p[0]
+    (aset state 0
+          (logxor (aref state 0)
+                  #x01010000
+                  (logand (lsh key 8)
+                          (1- (expt 2 (alist-get kind blake-two-bits-in-word))))
+                  first-bytes))
+
+    ;; Process padded key and data blocks
+    (when (> data-len 1)
+      ;; todo: possibly 2->1 because inclusive for in pseudo
+      (dotimes (idx (- data-len 2))
+        (setq state (blake-two-compress
+                     kind state
+                     (aref data idx) (* (1+ idx) blake-two-msg-size)))))
+
+    ;; Final block
+    (if (= 0 (length key))
+        (setq state (blake-two-compress kind state
+                                        (aref data (1- data-len))
+                                        (length raw-data)
+                                        t))
+      (setq state (blake-two-compress kind state
+                                      (aref data (1- data-len))
+                                      (+ (length raw-data)
+                                         blake-two-msg-size)
+                                      t)))
+    ;; todo: RETURN first "nn" bytes from little-endian word array h[].
+    state))
+
 (provide 'blake)
 ;;; blake.el ends here
