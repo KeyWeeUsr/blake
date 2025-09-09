@@ -262,11 +262,12 @@ Optional argument FINAL is a flag marking the final round."
 
     state))
 
-(defun blake-two-chunk-data (raw-data)
-  "Split RAW-DATA flat array of bytes into BLAKE workable blocks."
+(defun blake-two-chunk-data (raw-data kind)
+  "Split RAW-DATA flat array of bytes into BLAKE workable blocks.
+Argument KIND One of `blake-two-kinds'."
   (let* ((data-len (length raw-data))
-         (element-size (/ (alist-get blake-two-big blake-two-bits-in-word)
-                          blake-two-byte))
+         (bitness (alist-get kind blake-two-bits-in-word))
+         (element-size (/ bitness blake-two-byte))
          (data (make-vector (ceiling (/ (float data-len) (* blake-two-msg-size
                                                             element-size)))
                             nil))
@@ -287,7 +288,8 @@ Optional argument FINAL is a flag marking the final round."
             (aset element eidx (aref raw-data raw-pos))
             (setq raw-pos (1+ raw-pos))))
 
-        (aset (aref data chunk-pos) chunk-idx (blake-read-uint element 64))
+        (aset (aref data chunk-pos) chunk-idx
+              (blake-read-uint element bitness))
         (setq chunk-idx (mod (1+ chunk-idx) blake-two-msg-size))
         (when (= 0 (mod raw-pos (* blake-two-msg-size element-size)))
           (setq chunk-pos (1+ chunk-pos))
@@ -317,7 +319,7 @@ Optional argument KEY is a secret key making the func output a keyed hash."
   (unless (member kind blake-two-kinds)
     (error "Invalid kind %S" kind))
 
-  (let* ((data (blake-two-chunk-data raw-data))
+  (let* ((data (blake-two-chunk-data raw-data kind))
          ;; copy because of re-use in defconst
          (state (vconcat (alist-get kind blake-two-iv)))
          (data-len (length data))
