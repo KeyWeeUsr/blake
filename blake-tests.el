@@ -580,6 +580,32 @@
                (blake-two-init-state-zero
                 kind state 0 (alist-get kind blake-two-bits-in-word))))))
 
+(ert-deftest blake-two-small-first-mix ()
+  (let* ((kind blake-two-small)
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
+         (msg [#x00636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+         (ctr-size (alist-get kind blake-two-counter-size)))
+    (aset state 0 (blake-two-init-state-zero
+                   kind state 0 (alist-get kind blake-two-bits-in-word)))
+
+    (setq state (vconcat state (alist-get kind blake-two-iv)))
+
+    ;; set the counter for the first compression round manually
+    ;; note: this should be set by the compress func
+    (aset state 12 (logxor (aref state 12)
+                           (mod (length "abc") (expt 2 ctr-size))))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=0, v[16][0]
+    (should (= #x6B08E647 (aref state 0)))
+    (should (= 0 (aref msg (aref schedule 1))))
+    (should (= (aref msg 0) (aref msg (aref schedule 0))))
+    (should (= #xD6C0C1DF
+               (aref (blake-two-mix kind state 0 4 8 12
+                                    (aref msg (aref schedule 0))
+                                    (aref msg (aref schedule 1)))
+                     0)))))
+
 (ert-deftest blake-two-small-compress ()
   (let* ((kind blake-two-small)
          (state (vconcat (alist-get kind blake-two-iv)))
