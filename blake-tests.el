@@ -72,6 +72,63 @@
                   [ 14 10  4  8  9 15 13  6  1 12  0  2 11  7  5  3 ]]
                  blake-two-schedule-big)))
 
+(ert-deftest blake-two-chunk-data ()
+  (let ((matrix `((:name "nil"
+                   :data nil
+                   :error "Empty data"
+                   :result nil)
+                  (:name "empty []"
+                   :data []
+                   :error "Empty data"
+                   :result nil)
+                  (:name "short [0]"
+                   :data [0]
+                   :error nil
+                   :result [[0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]])
+                  (:name "short [1]"
+                   :data [1]
+                   :error nil
+                   :result [[1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]])
+                  (:name "n-1"
+                   :data ,(vconcat (number-sequence 1 15))
+                   :error nil
+                   :result [[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 0]])
+                  (:name "n"
+                   :data ,(vconcat (number-sequence 1 16))
+                   :error nil
+                   :result [[1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16]])
+                  (:name "n+1"
+                   :data ,(vconcat (number-sequence 1 17))
+                   :error nil
+                   :result [[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
+                            [17  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]])
+                  (:name "2n-1"
+                   :data ,(vconcat (number-sequence 1 31))
+                   :error nil
+                   :result [[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
+                            [17 18 19 20 21 22 23 24 25 26 27 28 29 30 31  0]])
+                  (:name "2n"
+                   :data ,(vconcat (number-sequence 1 32))
+                   :error nil
+                   :result [[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
+                            [17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32]])
+                  (:name "2n+1"
+                   :data ,(vconcat (number-sequence 1 33))
+                   :error nil
+                   :result [[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
+                            [17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32]
+                            [33  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]])
+                  )))
+    (dolist (item matrix)
+      (let (tmp)
+        (condition-case error
+            (should (equal (plist-get item :result)
+                           (blake-two-chunk-data (plist-get item :data))))
+          (t (let ((err (plist-get item :error)))
+               (if err
+                   (should (equal (plist-get item :error)
+                                  (error-message-string error)))
+                 (should-not error)))))))))
 
 (provide 'blake-tests)
 ;;; blake-tests.el ends here

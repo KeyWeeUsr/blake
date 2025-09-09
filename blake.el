@@ -237,5 +237,23 @@ Optional argument FINAL is a flag marking the final round."
 
     state))
 
+(defun blake-two-chunk-data (raw-data)
+  "Split RAW-DATA flat array of bytes into BLAKE workable blocks."
+  (let* ((data-len (length raw-data))
+         (data (make-vector (ceiling (/ (float data-len) blake-two-msg-size))
+                            nil))
+         (idx 0))
+    (unless (> data-len 0) (error "Empty data"))
+
+    (while (< idx data-len)
+      (let ((chunk (/ idx blake-two-msg-size))
+            (chunk-pos (mod idx blake-two-msg-size)))
+        (when (= 0 chunk-pos)
+          (aset data chunk (make-vector blake-two-msg-size 0)))
+
+        (aset (aref data chunk) chunk-pos (aref raw-data idx))
+        (setq idx (1+ idx))))
+    data))
+
 (provide 'blake)
 ;;; blake.el ends here
