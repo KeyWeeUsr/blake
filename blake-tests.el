@@ -772,6 +772,111 @@
                                     (aref msg (aref schedule 1)))
                      0)))))
 
+(ert-deftest blake-two-small-one-round-mix-manual ()
+  (let* ((kind blake-two-small)
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
+         (msg [#x00636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+         (ctr-size (alist-get kind blake-two-counter-size)))
+    ;; initialize state
+    ;; note: this should be set by the blake2 func
+    (aset state 0 (blake-two-init-state-zero
+                   kind state 0 (alist-get kind blake-two-bits-in-word)))
+
+    ;; state is a 16-element array of [,@init state, ,@IV]
+    (setq state (vconcat state (alist-get kind blake-two-iv)))
+
+    ;; set the counter for the first compression round manually
+    ;; note: this should be set by the compress func
+    (aset state 12 (logxor (aref state 12)
+                           (mod (length "abc") (expt 2 ctr-size))))
+
+    ;; invert the v[14] manually
+    ;; note: this should be set by the compress func
+    ;; note: this happens only when the final compression takes the place
+    ;;       for which a small-enough message falls only to the final stage
+    ;;       without intermediate compression calls
+    (aset state 14
+          (logand (lognot (aref state 14))
+                  (1- (expt 2 (alist-get kind blake-two-bits-in-word)))))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-B, i=0, v[16][0]
+    (should (= #x6B08E647 (aref state 0)))
+    (should (= 0 (aref msg (aref schedule 1))))
+    (should (= (aref msg 0) (aref msg (aref schedule 0))))
+
+    (setq state (blake-two-mix kind state 0 4 8 12
+                               (aref msg (aref schedule 0))
+                               (aref msg (aref schedule 1))))
+    (should (equal [#xD6C0C1DF #xBB67AE85 #x3C6EF372 #xA54FF53A
+                    #x7F898693 #x9B05688C #x1F83D9AB #x5BE0CD19
+                    #xDE856F07 #xBB67AE85 #x3C6EF372 #xA54FF53A
+                    #xAB1F9B2C #x9B05688C #xE07C2654 #x5BE0CD19]
+                   state))
+
+    (setq state (blake-two-mix kind state 1 5 9 13
+                               (aref msg (aref schedule 2))
+                               (aref msg (aref schedule 3))))
+    (should (equal [#xD6C0C1DF #x8C871712 #x3C6EF372 #xA54FF53A
+                    #x7F898693 #x8D07C52D #x1F83D9AB #x5BE0CD19
+                    #xDE856F07 #xB5F896C7 #x3C6EF372 #xA54FF53A
+                    #xAB1F9B2C #x7AF31ADA #xE07C2654 #x5BE0CD19]
+                   state))
+
+    (setq state (blake-two-mix kind state 2 6 10 14
+                               (aref msg (aref schedule 4))
+                               (aref msg (aref schedule 5))))
+    (should (equal [#xD6C0C1DF #x8C871712 #xC6A650D4 #xA54FF53A
+                    #x7F898693 #x8D07C52D #xB9D6AA3A #x5BE0CD19
+                    #xDE856F07 #xB5F896C7 #x81E69EEB #xA54FF53A
+                    #xAB1F9B2C #x7AF31ADA #x5A2DEFEB #x5BE0CD19]
+                   state))
+
+    (setq state (blake-two-mix kind state 3 7 11 15
+                               (aref msg (aref schedule 6))
+                               (aref msg (aref schedule 7))))
+    (should (equal [#xD6C0C1DF #x8C871712 #xC6A650D4 #xD26FB9FC
+                    #x7F898693 #x8D07C52D #xB9D6AA3A #x88609304
+                    #xDE856F07 #xB5F896C7 #x81E69EEB #xE17775ED
+                    #xAB1F9B2C #x7AF31ADA #x5A2DEFEB #x2CDD25E3]
+                   state))
+
+    (setq state (blake-two-mix kind state 0 5 10 15
+                               (aref msg (aref schedule 8))
+                               (aref msg (aref schedule 9))))
+    (should (equal [#x16A3242E #x8C871712 #xC6A650D4 #xD26FB9FC
+                    #x7F898693 #x93A4A14E #xB9D6AA3A #x88609304
+                    #xDE856F07 #xB5F896C7 #x608A3A6B #xE17775ED
+                    #xAB1F9B2C #x7AF31ADA #x5A2DEFEB #x3BB44C6B]
+                   state))
+
+    (setq state (blake-two-mix kind state 1 6 11 12
+                               (aref msg (aref schedule 10))
+                               (aref msg (aref schedule 11))))
+    (should (equal [#x16A3242E #xD7B5E238 #xC6A650D4 #xD26FB9FC
+                    #x7F898693 #x93A4A14E #xA44E7C31 #x88609304
+                    #xDE856F07 #xB5F896C7 #x608A3A6B #xB666383E
+                    #x7A8DD50F #x7AF31ADA #x5A2DEFEB #x3BB44C6B]
+                   state))
+
+    (setq state (blake-two-mix kind state 2 7 8 13
+                               (aref msg (aref schedule 12))
+                               (aref msg (aref schedule 13))))
+    (should (equal [#x16A3242E #xD7B5E238 #xCE8CE24B #xD26FB9FC
+                    #x7F898693 #x93A4A14E #xA44E7C31 #x41D4759B
+                    #x95BF33D3 #xB5F896C7 #x608A3A6B #xB666383E
+                    #x7A8DD50F #xBE378ED7 #x5A2DEFEB #x3BB44C6B]
+                   state))
+
+    (setq state (blake-two-mix kind state 3 4 9 14
+                               (aref msg (aref schedule 14))
+                               (aref msg (aref schedule 15))))
+    (should (equal [#x16A3242E #xD7B5E238 #xCE8CE24B #x927AEDE1
+                    #xA7B430D9 #x93A4A14E #xA44E7C31 #x41D4759B
+                    #x95BF33D3 #x9A99C181 #x608A3A6B #xB666383E
+                    #x7A8DD50F #xBE378ED7 #x353D1EE6 #x3BB44C6B]
+                   state))))
+
 (ert-deftest blake-two-small-chunk-raw-data ()
   (should (equal [[#x00636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]
                  (blake-two-chunk-data "abc" blake-two-small))))
