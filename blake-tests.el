@@ -444,5 +444,25 @@
                     #xE813A23C60AF3B82]
                    state))))
 
+(ert-deftest blake-two-compress ()
+  (let* ((kind blake-two-big)
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+         (counter 0)
+         (final t))
+    ;; initialize state
+    ;; note: this should be set by the blake2 func
+    (aset state 0 (blake-two-init-state-zero kind state 0 64))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, i=0, v[16][0]
+    (should (= #x6A09E667F2BDC948 (aref state 0)))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, h[8]
+    (setq state (blake-two-compress kind state msg (length "abc") t))
+    (should (equal [#x0D4D1C983FA580BA #xE9F6129FB697276A #xB7C45A68142F214C
+                    #xD1A2FFDB6FBB124B #x2D79AB2A39C5877D #x95CC3345DED552C2
+                    #x5A92F1DBA88AD318 #x239900D4ED8623B9]
+                   state))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here
