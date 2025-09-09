@@ -27,5 +27,8 @@
 
 ;;; Code:
 
+(defconst blake-two-big 'blake-two-big)
+(defconst blake-two-small 'blake-two-small)
+
 (provide 'blake)
 ;;; blake.el ends here
