@@ -231,7 +231,7 @@ Optional argument FINAL is a flag marking the final round."
   (let ((ctr-size (alist-get kind blake-two-counter-size))
         (local (make-vector blake-two-local-size 0))
         ;; copies because of re-use in defconst
-        (schedule (vconcat (alist-get kind blake-two-schedule)))
+        (sigma (vconcat (alist-get kind blake-two-schedule)))
         (iv (vconcat (alist-get kind blake-two-iv))))
     (dotimes (idx (length state))
       (aset local idx (aref state idx)))
@@ -252,31 +252,8 @@ Optional argument FINAL is a flag marking the final round."
                     (1- (expt 2 (alist-get kind blake-two-bits-in-word))))))
 
     (dotimes (idx (alist-get kind blake-two-rounds))
-      (let ((s (aref schedule (mod idx 10))))
-        (setq local (blake-two-mix kind local  0 4  8 12
-                                   (aref msg (aref s 0))
-                                   (aref msg (aref s 1))))
-        (setq local (blake-two-mix kind local  1 5  9 13
-                                   (aref msg (aref s 2))
-                                   (aref msg (aref s 3))))
-        (setq local (blake-two-mix kind local  2 6 10 14
-                                   (aref msg (aref s 4))
-                                   (aref msg (aref s 5))))
-        (setq local (blake-two-mix kind local  3 7 11 15
-                                   (aref msg (aref s 6))
-                                   (aref msg (aref s 7))))
-        (setq local (blake-two-mix kind local  0 5 10 15
-                                   (aref msg (aref s 8))
-                                   (aref msg (aref s 9))))
-        (setq local (blake-two-mix kind local  1 6 11 12
-                                   (aref msg (aref s 10))
-                                   (aref msg (aref s 11))))
-        (setq local (blake-two-mix kind local  2 7  8 13
-                                   (aref msg (aref s 12))
-                                   (aref msg (aref s 13))))
-        (setq local (blake-two-mix kind local  3 4  9 14
-                                   (aref msg (aref s 14))
-                                   (aref msg (aref s 15))))))
+      (let ((schedule (aref sigma (mod idx 10))))
+        (setq local (blake-two-round kind local msg schedule))))
 
     (dotimes (idx blake-two-state-size)
       (aset state idx (logxor (aref state idx)
