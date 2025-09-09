@@ -165,5 +165,123 @@
                                     (aref msg (aref schedule 1)))
                      0)))))
 
+(ert-deftest blake-two-one-round-mix-manual ()
+  (let* ((kind blake-two-big)
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
+         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]))
+    ;; initialize state
+    ;; note: this should be set by the blake2 func
+    (aset state 0 (blake-two-init-state-zero kind state 0 64))
+
+    ;; state is a 16-element array of [,@init state, ,@IV]
+    (setq state (vconcat state (alist-get kind blake-two-iv)))
+
+    ;; set the counter for the first compression round manually
+    ;; note: this should be set by the compress func
+    (aset state 12 (1+ (aref state 12)))
+
+    ;; invert the v[14] manually
+    ;; note: this should be set by the compress func
+    ;; note: this happens only when the final compression takes the place
+    ;;       for which a small-enough message falls only to the final stage
+    ;;       without intermediate compression calls
+    (aset state 14
+          (logand (lognot (aref state 14))
+                  (1- (expt 2 (alist-get kind blake-two-bits-in-word)))))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, i=0, v[16][0]
+    (should (= #x6A09E667F2BDC948 (aref state 0)))
+    (should (= 0 (aref msg (aref schedule 1))))
+    (should (= (aref msg 0) (aref msg (aref schedule 0))))
+
+    (setq state (blake-two-mix kind state 0 4 8 12
+                               (aref msg (aref schedule 0))
+                               (aref msg (aref schedule 1))))
+    (should (equal [#xF0C9AA0F86491DEA #xBB67AE8584CAA73B #x3C6EF372FE94F82B
+                    #xA54FF53A5F1D36F1 #xB7DEFC3D0277E11F #x9B05688C2B3E6C1F
+                    #x1F83D9ABFB41BD6B #x5BE0CD19137E2179 #xEE5E0F39647A9FFF
+                    #xBB67AE8584CAA73B #x3C6EF372FE94F82B #xA54FF53A5F1D36F1
+                    #x7772FC2886A76C5F #x9B05688C2B3E6C1F #xE07C265404BE4294
+                    #x5BE0CD19137E2179]
+                   state))
+
+    (setq state (blake-two-mix kind state 1 5 9 13
+                               (aref msg (aref schedule 2))
+                               (aref msg (aref schedule 3))))
+    (should (equal [#xF0C9AA0F86491DEA #x63B7DEDF4A4E5AD3 #x3C6EF372FE94F82B
+                    #xA54FF53A5F1D36F1 #xB7DEFC3D0277E11F #xED49C30CD311D50E
+                    #x1F83D9ABFB41BD6B #x5BE0CD19137E2179 #xEE5E0F39647A9FFF
+                    #x7BEE264BF3CDADFE #x3C6EF372FE94F82B #xA54FF53A5F1D36F1
+                    #x7772FC2886A76C5F #x254EF880A19A8726 #xE07C265404BE4294
+                    #x5BE0CD19137E2179]
+                   state))
+
+    (setq state (blake-two-mix kind state 2 6 10 14
+                               (aref msg (aref schedule 4))
+                               (aref msg (aref schedule 5))))
+    (should (equal [#xF0C9AA0F86491DEA #x63B7DEDF4A4E5AD3 #xBE50EB454E0A93D7
+                    #xA54FF53A5F1D36F1 #xB7DEFC3D0277E11F #xED49C30CD311D50E
+                    #xA056671704B00D71 #x5BE0CD19137E2179 #xEE5E0F39647A9FFF
+                    #x7BEE264BF3CDADFE #xB2752DADD66BD8F9 #xA54FF53A5F1D36F1
+                    #x7772FC2886A76C5F #x254EF880A19A8726 #x789D43381C47F584
+                    #x5BE0CD19137E2179]
+                   state))
+
+    (setq state (blake-two-mix kind state 3 7 11 15
+                               (aref msg (aref schedule 6))
+                               (aref msg (aref schedule 7))))
+    (should (equal [#xF0C9AA0F86491DEA #x63B7DEDF4A4E5AD3 #xBE50EB454E0A93D7
+                    #x949804B0483EAD14 #xB7DEFC3D0277E11F #xED49C30CD311D50E
+                    #xA056671704B00D71 #x75E6432FC4661B06 #xEE5E0F39647A9FFF
+                    #x7BEE264BF3CDADFE #xB2752DADD66BD8F9 #xA99463CB37905929
+                    #x7772FC2886A76C5F #x254EF880A19A8726 #x789D43381C47F584
+                    #xA25EF57D7DA312EE]
+                   state))
+
+    (setq state (blake-two-mix kind state 0 5 10 15
+                               (aref msg (aref schedule 8))
+                               (aref msg (aref schedule 9))))
+    (should (equal [#x86B7C1568029BB79 #x63B7DEDF4A4E5AD3 #xBE50EB454E0A93D7
+                    #x949804B0483EAD14 #xB7DEFC3D0277E11F #xA447C850AA694A7E
+                    #xA056671704B00D71 #x75E6432FC4661B06 #xEE5E0F39647A9FFF
+                    #x7BEE264BF3CDADFE #xFA87B01273FA6DBE #xA99463CB37905929
+                    #x7772FC2886A76C5F #x254EF880A19A8726 #x789D43381C47F584
+                    #x2318A24E2140FC64]
+                   state))
+
+    (setq state (blake-two-mix kind state 1 6 11 12
+                               (aref msg (aref schedule 10))
+                               (aref msg (aref schedule 11))))
+    (should (equal [#x86B7C1568029BB79 #xC12CBCC809FF59F3 #xBE50EB454E0A93D7
+                    #x949804B0483EAD14 #xB7DEFC3D0277E11F #xA447C850AA694A7E
+                    #xDE080F1BB1C0F84B #x75E6432FC4661B06 #xEE5E0F39647A9FFF
+                    #x7BEE264BF3CDADFE #xFA87B01273FA6DBE #x521A715C63E08D8A
+                    #xE02D0975B8D37A83 #x254EF880A19A8726 #x789D43381C47F584
+                    #x2318A24E2140FC64]
+                   state))
+
+    (setq state (blake-two-mix kind state 2 7 8 13
+                               (aref msg (aref schedule 12))
+                               (aref msg (aref schedule 13))))
+    (should (equal [#x86B7C1568029BB79 #xC12CBCC809FF59F3 #xC6A5214CC0EACA8E
+                    #x949804B0483EAD14 #xB7DEFC3D0277E11F #xA447C850AA694A7E
+                    #xDE080F1BB1C0F84B #x595CB8A9A1ACA66C #xBEC3AE837EAC4887
+                    #x7BEE264BF3CDADFE #xFA87B01273FA6DBE #x521A715C63E08D8A
+                    #xE02D0975B8D37A83 #x1C7B754F08B7D193 #x789D43381C47F584
+                    #x2318A24E2140FC64]
+                   state))
+
+    (setq state (blake-two-mix kind state 3 4 9 14
+                               (aref msg (aref schedule 14))
+                               (aref msg (aref schedule 15))))
+    (should (equal [#x86B7C1568029BB79 #xC12CBCC809FF59F3 #xC6A5214CC0EACA8E
+                    #x0C87CD524C14CC5D #x44EE6039BD86A9F7 #xA447C850AA694A7E
+                    #xDE080F1BB1C0F84B #x595CB8A9A1ACA66C #xBEC3AE837EAC4887
+                    #x6267FC79DF9D6AD1 #xFA87B01273FA6DBE #x521A715C63E08D8A
+                    #xE02D0975B8D37A83 #x1C7B754F08B7D193 #x8F885A76B6E578FE
+                    #x2318A24E2140FC64]
+                   state))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here
