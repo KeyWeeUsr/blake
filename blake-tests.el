@@ -5,19 +5,19 @@
 (require 'ert)
 (require 'blake)
 
-(ert-deftest blake-two-bits-resolve ()
+(ert-deftest blake-two-big-bits-resolve ()
   (should (equal 64 (alist-get blake-two-big blake-two-bits-in-word)))
   (should (equal 32 (alist-get blake-two-small blake-two-bits-in-word))))
 
-(ert-deftest blake-two-rounds-resolve ()
+(ert-deftest blake-two-big-rounds-resolve ()
   (should (equal 12 (alist-get blake-two-big blake-two-rounds)))
   (should (equal 10 (alist-get blake-two-small blake-two-rounds))))
 
-(ert-deftest blake-two-block-size-resolve ()
+(ert-deftest blake-two-big-block-size-resolve ()
   (should (equal 128 (alist-get blake-two-big blake-two-block-size)))
   (should (equal 64 (alist-get blake-two-small blake-two-block-size))))
 
-(ert-deftest blake-two-hash-size-limits-resolve ()
+(ert-deftest blake-two-big-hash-size-limits-resolve ()
   (let ((big (alist-get blake-two-big blake-two-hash-size-limits))
         (small (alist-get blake-two-small blake-two-hash-size-limits)))
     (should (equal 64 (alist-get 'upper big)))
@@ -25,7 +25,7 @@
     (should (equal 32 (alist-get 'upper small)))
     (should (equal 1 (alist-get 'lower small)))))
 
-(ert-deftest blake-two-key-size-limits-resolve ()
+(ert-deftest blake-two-big-key-size-limits-resolve ()
   (let ((big (alist-get blake-two-big blake-two-key-size-limits))
         (small (alist-get blake-two-small blake-two-key-size-limits)))
     (should (equal 64 (alist-get 'upper big)))
@@ -33,7 +33,7 @@
     (should (equal 32 (alist-get 'upper small)))
     (should (equal 1 (alist-get 'lower small)))))
 
-(ert-deftest blake-two-input-size-limits-resolve ()
+(ert-deftest blake-two-big-input-size-limits-resolve ()
   (let ((big (alist-get blake-two-big blake-two-input-size-limits))
         (small (alist-get blake-two-small blake-two-input-size-limits)))
     (should (equal (expt 2 128) (alist-get 'upper big)))
@@ -41,12 +41,12 @@
     (should (equal (expt 2 64) (alist-get 'upper small)))
     (should (equal 0 (alist-get 'lower small)))))
 
-(ert-deftest blake-two-rotconst-resolve ()
+(ert-deftest blake-two-big-rotconst-resolve ()
   (should (equal '(32 24 16 63)
                  (alist-get blake-two-big blake-two-rotconst)))
   (should (equal '(16 12 8 7)
                  (alist-get blake-two-small blake-two-rotconst))))
-(ert-deftest blake-two-schedules ()
+(ert-deftest blake-two-big-schedules ()
   (should (equal [[  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 ]
                   [ 14 10  4  8  9 15 13  6  1 12  0  2 11  7  5  3 ]
                   [ 11  8 12  0  5  2 15 13 10 14  3  6  7  1  9  4 ]
@@ -72,7 +72,7 @@
                   [ 14 10  4  8  9 15 13  6  1 12  0  2 11  7  5  3 ]]
                  blake-two-schedule-big)))
 
-(ert-deftest blake-two-chunk-data ()
+(ert-deftest blake-two-big-chunk-data ()
   (let ((matrix `((:name "nil"
                    :data nil
                    :error "Empty data"
@@ -216,7 +216,7 @@
                                   (error-message-string error)))
                  (should-not error)))))))))
 
-(ert-deftest blake-two-init-state-zero-sample ()
+(ert-deftest blake-two-big-init-state-zero-sample ()
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv))))
     (should (= #x6A09E667F3BCC908
@@ -227,7 +227,7 @@
                (blake-two-init-state-zero
                 kind state 0 (alist-get kind blake-two-bits-in-word))))))
 
-(ert-deftest blake-two-first-mix ()
+(ert-deftest blake-two-big-first-mix ()
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv)))
          (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
@@ -251,7 +251,7 @@
                                     (aref msg (aref schedule 1)))
                      0)))))
 
-(ert-deftest blake-two-one-round-mix-manual ()
+(ert-deftest blake-two-big-one-round-mix-manual ()
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv)))
          (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
@@ -370,7 +370,7 @@
                     #x2318A24E2140FC64]
                    state))))
 
-(ert-deftest blake-two-twelve-round-mix ()
+(ert-deftest blake-two-big-twelve-round-mix ()
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv)))
          (schedules (vconcat (alist-get kind blake-two-schedule)))
@@ -530,11 +530,11 @@
                     #xE813A23C60AF3B82]
                    state))))
 
-(ert-deftest blake-two-chunk-raw-data ()
+(ert-deftest blake-two-big-chunk-raw-data ()
   (should (equal [[#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]
                  (blake-two-chunk-data "abc"))))
 
-(ert-deftest blake-two-compress ()
+(ert-deftest blake-two-big-compress ()
   (let* ((kind blake-two-big)
          (state (vconcat (alist-get kind blake-two-iv)))
          (msg (aref (blake-two-chunk-data "abc") 0))
@@ -555,7 +555,7 @@
                     #x5A92F1DBA88AD318 #x239900D4ED8623B9]
                    state))))
 
-(ert-deftest blake-two-digest-sample ()
+(ert-deftest blake-two-big-digest-sample ()
   ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, BLAKE2b-512
   (should (equal [#xBA #x80 #xA5 #x3F #x98 #x1C #x4D #x0D
                   #x6A #x27 #x97 #xB6 #x9F #x12 #xF6 #xE9
