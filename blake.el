@@ -101,7 +101,19 @@ SIGMA[10..11] = SIGMA[0..1].")
     (blake-two-small . ,blake-two-schedule-small)))
 
 (defconst blake-two-local-size 16
-  "Size of 32-bit or 64-bit word local vector for calculating.")
+  "Vector size of 32-bit or 64-bit word local vector for calculating.")
+
+(defconst blake-two-state-size 8
+  "Vector size of initial state for compressing.")
+
+(defconst blake-two-msg-size 16
+  "Vector size of message block for compressing.")
+
+(defconst blake-two-counter-size
+  `((blake-two-big
+     . ,(alist-get blake-two-big blake-two-block-size))
+    (blake-two-small
+     . ,(alist-get blake-two-small blake-two-block-size))))
 
 (defun blake-rotate (v n &optional size)
   "Left (N>0) or right (N<0) rotate the *unsigned* SIZE-bit value V N-times.
@@ -119,7 +131,7 @@ Argument KIND One of `blake-two-kinds'.
 Argument V Working 16-element vector.
 Arguments A, B, C, D are used as V index when xoring.
 Arguments X, Y are input words for xoring and rotating."
-  (unless (member kind '(blake-two-big blake-two-small))
+  (unless (member kind blake-two-kinds)
     (error "Invalid kind %S" kind))
 
   (unless (= blake-two-local-size (length v))
@@ -145,6 +157,85 @@ Arguments X, Y are input words for xoring and rotating."
                             64))
 
     v))
+
+(defun blake-two-compress (kind state msg counter &optional final)
+  "Compressing function F.
+Argument KIND One of `blake-two-kinds'.
+Argument STATE 8-element state vector.
+Argument MSG 16-element message vector.
+Argument COUNTER is double-word-bit counter split into word-parts for xoring.
+Optional argument FINAL is a flag marking the final round."
+  (unless (member kind blake-two-kinds)
+    (error "Invalid kind %S" kind))
+
+  (unless (= blake-two-state-size (length state))
+    (error "Invalid state lenght"))
+
+  (unless (= blake-two-msg-size (length msg))
+    (error "Invalid msg lenght"))
+
+  (unless (booleanp final)
+    (error "Invalid flag type"))
+
+  (let ((ctr-size (alist-get kind blake-two-counter-size))
+        (local (make-vector blake-two-local-size 0))
+        ;; copies because of re-use in defconst
+        (schedule (vconcat (alist-get kind blake-two-schedule)))
+        (iv (vconcat (alist-get kind blake-two-iv))))
+    (unless (= ctr-size (length counter))
+      (error "Invalid counter lenght"))
+
+    (dotimes (idx (length state))
+      (aset local idx (aref state idx)))
+    (dotimes (idx (length iv))
+      (aset local (+ 8 idx) (aref iv idx)))
+
+    (aset local 12 (logxor (aref local 12) (mod counter (expt 2 ctr-size))))
+    (aset local 13
+          (logxor (aref local 13)
+                  ;; right-shift
+                  (lsh counter
+                       (* -1 (alist-get kind blake-two-bits-in-word)))))
+
+    (when final
+      (aset local 14
+            (logxor (aref local 14)
+                    ;; invert all bits
+                    (1- (expt 2 (alist-get kind blake-two-bits-in-word))))))
+
+    (dotimes (idx (alist-get kind blake-two-rounds))
+      (let ((s (aref schedule (mod idx 10))))
+        (setq local (blake-two-mix kind local  0 4  8 12
+                                   (aref msg (aref schedule 0))
+                                   (aref msg (aref schedule 1))))
+        (setq local (blake-two-mix kind local  1 5  9 13
+                                   (aref msg (aref schedule 2))
+                                   (aref msg (aref schedule 3))))
+        (setq local (blake-two-mix kind local  2 6 10 14
+                                   (aref msg (aref schedule 4))
+                                   (aref msg (aref schedule 5))))
+        (setq local (blake-two-mix kind local  3 7 11 15
+                                   (aref msg (aref schedule 6))
+                                   (aref msg (aref schedule 7))))
+        (setq local (blake-two-mix kind local  0 5 10 15
+                                   (aref msg (aref schedule 8))
+                                   (aref msg (aref schedule 9))))
+        (setq local (blake-two-mix kind local  1 6 11 12
+                                   (aref msg (aref schedule 10))
+                                   (aref msg (aref schedule 11))))
+        (setq local (blake-two-mix kind local  2 7  8 13
+                                   (aref msg (aref schedule 12))
+                                   (aref msg (aref schedule 13))))
+        (setq local (blake-two-mix kind local  3 4  9 14
+                                   (aref msg (aref schedule 14))
+                                   (aref msg (aref schedule 15))))))
+
+    (dotimes (idx blake-two-state-size)
+      (aset state idx (logxor (aref state idx)
+                              (aref local idx)
+                              (aref local (+ 8 idx)))))
+
+    state))
 
 (provide 'blake)
 ;;; blake.el ends here
