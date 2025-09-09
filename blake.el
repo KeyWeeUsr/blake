@@ -29,19 +29,42 @@
 
 (defconst blake-two-big 'blake-two-big)
 (defconst blake-two-small 'blake-two-small)
+(defconst blake-two-kinds '(blake-two-big blake-two-small))
 
-(defconst blake-two-bits-in-word '((blake-two-big . 64) (blake-two-small . 32)))
-(defconst blake-two-rounds '((blake-two-big . 12) (blake-two-small . 10)))
-(defconst blake-two-block-size '((blake-two-big . 128) (blake-two-small . 64)))
+(defconst blake-two-bits-in-word
+  '((blake-two-big . 64)
+    (blake-two-small . 32)))
+(defconst blake-two-rounds
+  '((blake-two-big . 12)
+    (blake-two-small . 10)))
+(defconst blake-two-block-size
+  `((blake-two-big
+     . ,(* 2 (alist-get blake-two-big blake-two-bits-in-word)))
+    (blake-two-small
+     . ,(* 2 (alist-get blake-two-small blake-two-bits-in-word)))))
 (defconst blake-two-hash-size-limits
-  '((blake-two-big . ((upper . 64) (lower . 1)))
-    (blake-two-small . ((upper . 32) (lower . 1)))))
+  `((blake-two-big
+     . ((upper . ,(alist-get blake-two-big blake-two-bits-in-word))
+        (lower . 1)))
+    (blake-two-small
+     . ((upper . ,(alist-get blake-two-small blake-two-bits-in-word))
+        (lower . 1)))))
 (defconst blake-two-key-size-limits
-  '((blake-two-big . ((upper . 64) (lower . 1)))
-    (blake-two-small . ((upper . 32) (lower . 1)))))
+  `((blake-two-big
+     . ((upper . ,(alist-get blake-two-big blake-two-bits-in-word))
+        (lower . 1)))
+    (blake-two-small
+     . ((upper . ,(alist-get blake-two-small blake-two-bits-in-word))
+        (lower . 1)))))
 (defconst blake-two-input-size-limits
-  `((blake-two-big . ((upper . ,(expt 2 128)) (lower . 0)))
-    (blake-two-small . ((upper . ,(expt 2 64)) (lower . 0)))))
+  `((blake-two-big
+     . ((upper
+         . ,(expt 2 (alist-get blake-two-big blake-two-block-size)))
+        (lower . 0)))
+    (blake-two-small
+     . ((upper
+         . ,(expt 2 (alist-get blake-two-small blake-two-block-size)))
+        (lower . 0)))))
 (defconst blake-two-rotconst
   '((blake-two-big . (32 24 16 63))
     (blake-two-small . (16 12 8 7))))
@@ -73,6 +96,10 @@
 For BLAKE2b, the two extra permutations forrounds 10 and 11 are
 SIGMA[10..11] = SIGMA[0..1].")
 
+(defconst blake-two-schedule
+  `((blake-two-big . ,blake-two-schedule-big)
+    (blake-two-small . ,blake-two-schedule-small)))
+
 (defconst blake-two-local-size 16
   "Size of 32-bit or 64-bit word local vector for calculating.")
 
@@ -88,7 +115,7 @@ From Elchacha (`elchacha-rotate')."
 (defun blake-two-mix (kind v a b c d x y)
   "Mixing function G from RFC7693.
 Ref: https://www.rfc-editor.org/rfc/rfc7693#section-3.1
-Argument KIND `blake-two-big' or `blake-two-small'.
+Argument KIND One of `blake-two-kinds'.
 Argument V Working 16-element vector.
 Arguments A, B, C, D are used as V index when xoring.
 Arguments X, Y are input words for xoring and rotating."
