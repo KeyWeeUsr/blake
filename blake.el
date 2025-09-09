@@ -222,9 +222,6 @@ Optional argument FINAL is a flag marking the final round."
         ;; copies because of re-use in defconst
         (schedule (vconcat (alist-get kind blake-two-schedule)))
         (iv (vconcat (alist-get kind blake-two-iv))))
-    (unless (= ctr-size (length counter))
-      (error "Invalid counter lenght"))
-
     (dotimes (idx (length state))
       (aset local idx (aref state idx)))
     (dotimes (idx (length iv))
