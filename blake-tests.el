@@ -141,5 +141,29 @@
                (blake-two-init-state-zero
                 kind state 0 (alist-get kind blake-two-bits-in-word))))))
 
+(ert-deftest blake-two-first-mix ()
+  (let* ((kind blake-two-big)
+         (state (vconcat (alist-get kind blake-two-iv)))
+         (schedule (aref (vconcat (alist-get kind blake-two-schedule)) 0))
+         (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]))
+    (aset state 0 (blake-two-init-state-zero
+                   kind state 0 (alist-get kind blake-two-bits-in-word)))
+
+    (setq state (vconcat state (alist-get kind blake-two-iv)))
+
+    ;; set the counter for the first compression round manually
+    ;; note: this should be set by the compress func
+    (aset state 12 (1+ (aref state 12)))
+
+    ;; note: https://www.rfc-editor.org/rfc/rfc7693#appendix-A, i=0, v[16][0]
+    (should (= #x6A09E667F2BDC948 (aref state 0)))
+    (should (= 0 (aref msg (aref schedule 1))))
+    (should (= (aref msg 0) (aref msg (aref schedule 0))))
+    (should (= #xF0C9AA0F86491DEA
+               (aref (blake-two-mix kind state 0 4 8 12
+                                    (aref msg (aref schedule 0))
+                                    (aref msg (aref schedule 1)))
+                     0)))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here
