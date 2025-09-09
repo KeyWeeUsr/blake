@@ -172,7 +172,8 @@
          (msg [#x0000000000636261 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]))
     ;; initialize state
     ;; note: this should be set by the blake2 func
-    (aset state 0 (blake-two-init-state-zero kind state 0 64))
+    (aset state 0 (blake-two-init-state-zero
+                   kind state 0 (alist-get kind blake-two-bits-in-word)))
 
     ;; state is a 16-element array of [,@init state, ,@IV]
     (setq state (vconcat state (alist-get kind blake-two-iv)))
