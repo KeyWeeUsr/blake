@@ -42,6 +42,9 @@
 (defconst blake-two-input-size-limits
   `((blake-two-big . ((upper . ,(expt 2 128)) (lower . 0)))
     (blake-two-small . ((upper . ,(expt 2 64)) (lower . 0)))))
+(defconst blake-two-rotconst
+  '((blake-two-big . (32 24 16 63))
+    (blake-two-small . (16 12 8 7))))
 
 (provide 'blake)
 ;;; blake.el ends here

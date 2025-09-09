@@ -41,5 +41,11 @@
     (should (equal (expt 2 64) (alist-get 'upper small)))
     (should (equal 0 (alist-get 'lower small)))))
 
+(ert-deftest blake-two-rotconst-resolve ()
+  (should (equal '(32 24 16 63)
+                 (alist-get blake-two-big blake-two-rotconst)))
+  (should (equal '(16 12 8 7)
+                 (alist-get blake-two-small blake-two-rotconst))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here
