@@ -1032,5 +1032,160 @@
                   blake-two-small "abc"
                   (alist-get blake-two-small blake-two-bits-in-word)))))
 
+(ert-deftest blake-two-big-digest-one-intermediate-block ()
+  (let* ((kind blake-two-big)
+         (bitness (alist-get kind blake-two-bits-in-word))
+         result)
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (insert (concat [#x30 #x31 #x32 #x33 #x34 #x35 #x36 #x37
+                       #x38 #x39 #x61 #x62 #x63 #x64 #x65 #x66
+                       #x67 #x68 #x69 #x6A #x6B #x6C #x6D #x6E
+                       #x6F #x70 #x71 #x72 #x73 #x74 #x75 #x76
+                       #x77 #x78 #x79 #x7A #x41 #x42 #x43 #x44
+                       #x45 #x46 #x47 #x48 #x49 #x4A #x4B #x4C
+                       #x4D #x4E #x4F #x50 #x51 #x52 #x53 #x54
+                       #x55 #x56 #x57 #x58 #x59 #x5A #x30 #x31
+                       #x32 #x33 #x34 #x35 #x36 #x37 #x38 #x39
+                       #x61 #x62 #x63 #x64 #x65 #x66 #x67 #x68
+                       #x69 #x6A #x6B #x6C #x6D #x6E #x6F #x70
+                       #x71 #x72 #x73 #x74 #x75 #x76 #x77 #x78
+                       #x79 #x7A #x41 #x42 #x43 #x44 #x45 #x46
+                       #x47 #x48 #x49 #x4A #x4B #x4C #x4D #x4E
+                       #x4F #x50 #x51 #x52 #x53 #x54 #x55 #x56
+                       #x57 #x58 #x59 #x5A #x30 #x31 #x32 #x33 #x34]
+                      ""))
+      (setq result (string-join
+                    (mapcar (lambda (x) (format "%02x" x))
+                            (blake-two kind (buffer-string) bitness))
+                    "")))
+
+    ;; bad hash due to counter bug not resetting at 2x word (b=128/s=64)
+    (should-not (string=
+                 (string-join
+                  (mapcar (lambda (x) (format "%02x" x))
+                          (concat [#x99 #x74 #xfe #xf0 #x2d #xbe #x0a #x8e
+                                   #x4f #xbc #xdd #xcb #xe4 #x9f #x96 #xce
+                                   #xfe #xf6 #xa3 #x7f #x2d #x40 #x50 #x3a
+                                   #x03 #x8b #xcc #xa3 #xd6 #x55 #x7d #xf7
+                                   #x6a #x60 #x09 #xc1 #xef #xf1 #x34 #x12
+                                   #x75 #x8e #xea #x68 #xad #xca #x15 #x36
+                                   #xed #x32 #x2c #x1c #x19 #x19 #xb7 #x14
+                                   #x2f #x1d #x8c #xbd #x4e #xc2 #x6c #xd5]))
+                  "")
+                 result))
+
+    ;; good hash checked against b2sum
+    (should (string=
+             (string-join
+              (mapcar (lambda (x) (format "%02x" x))
+                      (concat [#x8B #xCF #x98 #x4B #xC6 #x7E #x18 #x16
+                               #x35 #xB1 #x84 #x91 #x9C #xA6 #x0B #x83
+                               #xEB #x2A #x92 #x4A #x0F #x26 #x5B #x17
+                               #xD5 #x5E #xF9 #x86 #x29 #xE9 #x2F #x93
+                               #x4C #x40 #x60 #x85 #xA2 #xC0 #x3F #xF9
+                               #x02 #xB0 #xFE #x74 #x9F #xA8 #xB5 #x06
+                               #xC1 #xCC #xEB #x1C #xD8 #x5F #x60 #x32
+                               #xB1 #x8B #x14 #x93 #xC0 #xDA #x34 #x54]))
+              "")
+             result))))
+
+(ert-deftest blake-two-big-digest-two-intermediate-blocks ()
+  (let* ((kind blake-two-big)
+         (bitness (alist-get kind blake-two-bits-in-word))
+         result)
+    (with-temp-buffer
+      (set-buffer-multibyte nil)
+      (insert (concat [#x30 #x31 #x32 #x33 #x34 #x35 #x36 #x37
+                       #x38 #x39 #x61 #x62 #x63 #x64 #x65 #x66
+                       #x67 #x68 #x69 #x6A #x6B #x6C #x6D #x6E
+                       #x6F #x70 #x71 #x72 #x73 #x74 #x75 #x76
+                       #x77 #x78 #x79 #x7A #x41 #x42 #x43 #x44
+                       #x45 #x46 #x47 #x48 #x49 #x4A #x4B #x4C
+                       #x4D #x4E #x4F #x50 #x51 #x52 #x53 #x54
+                       #x55 #x56 #x57 #x58 #x59 #x5A #x30 #x31
+                       #x32 #x33 #x34 #x35 #x36 #x37 #x38 #x39
+                       #x61 #x62 #x63 #x64 #x65 #x66 #x67 #x68
+                       #x69 #x6A #x6B #x6C #x6D #x6E #x6F #x70
+                       #x71 #x72 #x73 #x74 #x75 #x76 #x77 #x78
+                       #x79 #x7A #x41 #x42 #x43 #x44 #x45 #x46
+                       #x47 #x48 #x49 #x4A #x4B #x4C #x4D #x4E
+                       #x4F #x50 #x51 #x52 #x53 #x54 #x55 #x56
+                       #x57 #x58 #x59 #x5A #x30 #x31 #x32 #x33 #x34]
+                      ""))
+      (setq result (string-join
+                    (mapcar (lambda (x) (format "%02x" x))
+                            (blake-two kind (buffer-string) bitness))
+                    "")))
+
+    ;; bad hash due to counter bug not resetting at 2x word (b=128/s=64)
+    (should-not (string=
+                 (string-join
+                  (mapcar (lambda (x) (format "%02x" x))
+                          (concat [#x99 #x74 #xfe #xf0 #x2d #xbe #x0a #x8e
+                                   #x4f #xbc #xdd #xcb #xe4 #x9f #x96 #xce
+                                   #xfe #xf6 #xa3 #x7f #x2d #x40 #x50 #x3a
+                                   #x03 #x8b #xcc #xa3 #xd6 #x55 #x7d #xf7
+                                   #x6a #x60 #x09 #xc1 #xef #xf1 #x34 #x12
+                                   #x75 #x8e #xea #x68 #xad #xca #x15 #x36
+                                   #xed #x32 #x2c #x1c #x19 #x19 #xb7 #x14
+                                   #x2f #x1d #x8c #xbd #x4e #xc2 #x6c #xd5]))
+                  "")
+                 result))
+
+    ;; good hash checked against b2sum
+    (should (string=
+             (string-join
+              (mapcar (lambda (x) (format "%02x" x))
+                      (concat [#x8B #xCF #x98 #x4B #xC6 #x7E #x18 #x16
+                               #x35 #xB1 #x84 #x91 #x9C #xA6 #x0B #x83
+                               #xEB #x2A #x92 #x4A #x0F #x26 #x5B #x17
+                               #xD5 #x5E #xF9 #x86 #x29 #xE9 #x2F #x93
+                               #x4C #x40 #x60 #x85 #xA2 #xC0 #x3F #xF9
+                               #x02 #xB0 #xFE #x74 #x9F #xA8 #xB5 #x06
+                               #xC1 #xCC #xEB #x1C #xD8 #x5F #x60 #x32
+                               #xB1 #x8B #x14 #x93 #xC0 #xDA #x34 #x54]))
+              "")
+             result))))
+
+(ert-deftest blake-two-big-integration-test ()
+  (ert-skip "Takes too long, adjust iterations and execute when needed.")
+  (let* ((start 1) (iters 100000)
+         (source '(#x30 #x31 #x32 #x33 #x34 #x35 #x36 #x37
+                   #x38 #x39 #x61 #x62 #x63 #x64 #x65 #x66
+                   #x67 #x68 #x69 #x6A #x6B #x6C #x6D #x6E
+                   #x6F #x70 #x71 #x72 #x73 #x74 #x75 #x76
+                   #x77 #x78 #x79 #x7A #x41 #x42 #x43 #x44
+                   #x45 #x46 #x47 #x48 #x49 #x4A #x4B #x4C
+                   #x4D #x4E #x4F #x50 #x51 #x52 #x53 #x54
+                   #x55 #x56 #x57 #x58 #x59 #x5A))
+         (source-len (length source))
+         lines)
+    (shell-command "rm sample-*.txt")
+    (dotimes (times (- (+ start iters) start))
+      (let ((idx 0))
+        (with-temp-file (format "sample-%05d.txt" (+ start times))
+          (while (< idx (+ start times))
+            (insert (nth (mod idx source-len) source))
+            (setq idx (1+ idx))))))
+    (dotimes (times (- (+ start iters) start))
+      (let ((name (format "sample-%05d.txt" (+ start times)))
+            result)
+        (with-temp-buffer
+          (set-buffer-multibyte nil)
+          (insert-file-contents-literally name)
+          (setq result (blake-two
+                        blake-two-big (buffer-string)
+                        (alist-get kind blake-two-bits-in-word)))
+          (push (format "%s  %s\n"
+                        (string-join
+                         (mapcar (lambda (x) (format "%02x" x)) result) "")
+                        name)
+                lines))))
+    (with-temp-file "elisp-samples.txt"
+      (insert (string-join (reverse lines) "")))
+    (should (= 0 (shell-command "b2sum sample-*>samples.txt")))
+    (should (= 0 (shell-command "diff samples.txt elisp-samples.txt")))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here

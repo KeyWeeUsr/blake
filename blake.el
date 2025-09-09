@@ -228,7 +228,9 @@ Optional argument FINAL is a flag marking the final round."
   (unless (booleanp final)
     (error "Invalid flag type"))
 
-  (let ((ctr-size (alist-get kind blake-two-counter-size))
+  (let ((word-size (alist-get kind blake-two-bits-in-word))
+        (word-max (1- (expt 2 (alist-get kind blake-two-bits-in-word))))
+        (ctr-size (alist-get kind blake-two-counter-size))
         (local (make-vector blake-two-local-size 0))
         ;; copies because of re-use in defconst
         (sigma (vconcat (alist-get kind blake-two-schedule)))
@@ -238,18 +240,19 @@ Optional argument FINAL is a flag marking the final round."
     (dotimes (idx (length iv))
       (aset local (+ 8 idx) (aref iv idx)))
 
-    (aset local 12 (logxor (aref local 12) (mod counter (expt 2 ctr-size))))
-    (aset local 13
-          (logxor (aref local 13)
-                  ;; right-shift
-                  (lsh counter
-                       (* -1 (alist-get kind blake-two-bits-in-word)))))
+    ;; on 129th input byte non-final compression rounds are activated
+    ;; then the counter is always 128*idx low until it overflows to high
+    ;; which is then captured by ash+logand (upper 64-bits)
+    (aset local 12 (logxor (aref local 12) (logand counter word-max)))
+    (aset local 13 (logxor (aref local 13)
+                           ;; wrap around
+                           (logand (ash counter (* -1 word-size)) word-max)))
 
     (when final
       (aset local 14
             ;; invert all bits
             (logand (lognot (aref local 14))
-                    (1- (expt 2 (alist-get kind blake-two-bits-in-word))))))
+                    (1- (expt 2 word-size)))))
 
     (dotimes (idx (alist-get kind blake-two-rounds))
       (let ((schedule (aref sigma (mod idx 10))))
@@ -323,17 +326,17 @@ Optional argument KEY is a secret key making the func output a keyed hash."
          ;; copy because of re-use in defconst
          (state (vconcat (alist-get kind blake-two-iv)))
          (data-len (length data))
+         (ctr-size (alist-get kind blake-two-counter-size))
+         (block-size (alist-get kind blake-two-block-size))
          (output (make-vector (alist-get kind blake-two-bits-in-word) 0)))
     ;; parameter block p[0]
     (aset state 0 (blake-two-init-state-zero kind state key first-bytes))
 
     ;; Process padded key and data blocks
-    (when (> data-len 1)
-      ;; todo: possibly 2->1 because inclusive for in pseudo
-      (dotimes (idx (- data-len 2))
+    (when (> data-len 1) ;; more than one chunk [[], [], ...]
+      (dotimes (idx (- data-len 1))
         (setq state (blake-two-compress
-                     kind state
-                     (aref data idx) (* (1+ idx) blake-two-msg-size)))))
+                     kind state (aref data idx) (* (1+ idx) block-size)))))
 
     ;; Final block
     (if (= 0 key)
