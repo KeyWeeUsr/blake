@@ -36,6 +36,9 @@
 (defconst blake-two-hash-size-limits
   '((blake-two-big . ((upper . 64) (lower . 1)))
     (blake-two-small . ((upper . 32) (lower . 1)))))
+(defconst blake-two-key-size-limits
+  '((blake-two-big . ((upper . 64) (lower . 1)))
+    (blake-two-small . ((upper . 32) (lower . 1)))))
 
 (provide 'blake)
 ;;; blake.el ends here

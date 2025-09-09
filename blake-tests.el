@@ -25,5 +25,13 @@
     (should (equal 32 (alist-get 'upper small)))
     (should (equal 1 (alist-get 'lower small)))))
 
+(ert-deftest blake-two-key-size-limits-resolve ()
+  (let ((big (alist-get blake-two-big blake-two-key-size-limits))
+        (small (alist-get blake-two-small blake-two-key-size-limits)))
+    (should (equal 64 (alist-get 'upper big)))
+    (should (equal 1 (alist-get 'lower big)))
+    (should (equal 32 (alist-get 'upper small)))
+    (should (equal 1 (alist-get 'lower small)))))
+
 (provide 'blake-tests)
 ;;; blake-tests.el ends here
